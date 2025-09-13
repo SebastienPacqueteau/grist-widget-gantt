@@ -7,6 +7,7 @@
 // ====================================
 // ==== Configuration pour Grist ======
 // ====================================
+let diagrammeGantt = null; //Création d'une variable qui représente l'objet chartJS 
 
 let colonnesNecessaires = [
 	{
@@ -157,18 +158,18 @@ function moisPrecedent(){
   dateDebutGantt.setMonth(dateDebutGantt.getMonth() -1);
   dateFinGantt.setMonth(dateFinGantt.getMonth() -1);
 
-	myChart.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.update();
+	diagrammeGantt.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
+  diagrammeGantt.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
+  diagrammeGantt.update();
 
 }
 function moisSuivant(){
   dateDebutGantt.setMonth(dateDebutGantt.getMonth() +1);
   dateFinGantt.setMonth(dateFinGantt.getMonth() +1);
 
-	myChart.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.update();
+	diagrammeGantt.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
+  diagrammeGantt.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
+  diagrammeGantt.update();
 
 }
 
@@ -177,9 +178,9 @@ function moisMilieu(date){
 	ajouteMoisDate (date, dateFinGantt, 4)
 	//console.log(dateDebutGantt,dateFinGantt,date.value);
 
-	myChart.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.update();
+	diagrammeGantt.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
+  diagrammeGantt.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
+  diagrammeGantt.update();
 }
 
 function formatageDate(date){
@@ -238,8 +239,8 @@ grist.onRecords((table, mappings) => {
 		//nomTableau = ;
 		creerlisteProjets(tableau, listeProjets, colonnes);
 		// Création du diagramme après initialisation du module Grist:
-		const myChart = new Chart(
-		  document.getElementById('myChart'),
+		diagrammeGantt = new Chart(
+		  document.getElementById('diagrammeGantt'),
 		  config
 		);
 		console.log('Grist onRecords');
