@@ -7,7 +7,7 @@
 // ====================================
 // ==== Configuration pour Grist ======
 // ====================================
-let diagrammeGantt = null; //Création d'une variable qui représente l'objet chartJS 
+let diagrammeGantt = null; //Création d'une variable qui représente l'objet chartJS
 
 let colonnesNecessaires = [
 	{
@@ -17,23 +17,23 @@ let colonnesNecessaires = [
 		optional: false // if column is optional.
 	},
 	{name: 'NbAgents',title: "Nombre d'Agents sur le projet",type: 'Int',optional: true},
-	{name: 'Agents',title: "Nom de l'agent",type: 'Any',optional: false}, //// TODO: permettre à l'avenir d'avoir une référence à plusieurs agents sur le même projet
+	{name: 'Agents',title: "Nom du ou des agent(s)",type: 'Any',optional: false},
   {name: 'Service',title: "Service",type: 'Any', optional: false},
   {name: 'SousDirection',title: "sous-direction",type: 'Any', optional: false},
 	{name: 'AutoriteHierarchique',title: "Responsable du ou des agent(s)",type: 'Any',optional: false},
   {name: 'Description',title: "Description du projet",type: 'Text',optional: true},
   {name: 'DateDebut',title: "Date de début de la mission",type: 'Date',optional: false},
   {name: 'DateFin',title: "Date de fin de la mission",type: 'Date',optional: false},
-  {name: 'Quotite',title: "Quotité du temps de l'agent (en %)",type: 'Any',optional: false},
+	{name: 'Quotite',title: "Quotité du temps sur le projet (en %)",type: 'Any',optional: false},
   {name: 'Priorite',title: "Priorite du projet pour le service et la direction",type: 'Any',optional: true}
 ];
 
 class Projet{
-	constructor(nomProjet,dateDebut,dateFin,agent,service,sousDirection, quotite,priorite){
+	constructor(nomProjet,dateDebut,dateFin,agents,service,sousDirection, quotite,priorite){
 		//this.infoSiret = infoSiret.results[0];
 		this.x = [dateDebut,dateFin];
 		this.y = nomProjet;
-		this.Agents = agent;
+		this.Agents = agents;
 		this.Service = service;
 		this.SousDirection = sousDirection;
 		this.Quotite = quotite;
@@ -96,14 +96,17 @@ const LigneJour = {
   //beforeDatasetsDraw : utiliser cette fonction pour mettre au second plan
   beforeDatasetsDraw(chart, args, pluginOptions){
     const {ctx, data, chartArea: {top, bottom,left, rogjt} , scales: {x,y} } = chart;
-    ctx.save();
-    ctx.beginPath();
-    ctx.lineWidth = 3;//largeur de la ligne
-    ctx.strokeStyle = 'rgba(255,26,104,1)'; //la couleur de la ligne
-    ctx.setLineDash([6,6])
-    ctx.moveTo(x.getPixelForValue(new Date()),top);
-    ctx.lineTo(x.getPixelForValue(new Date()),bottom);
-    ctx.stroke();
+		const aujourdhui = new Date();
+		if (aujourdhui>dateDebutGantt && aujourdhui<dateFinGantt){
+			ctx.save();
+			ctx.beginPath();
+			ctx.lineWidth = 3;//largeur de la ligne
+			ctx.strokeStyle = 'black';//'rgba(53,88,162,1)'; //la couleur de la ligne 
+			ctx.setLineDash([6,6])
+			ctx.moveTo(x.getPixelForValue(aujourdhui),top);
+			ctx.lineTo(x.getPixelForValue(aujourdhui),bottom);
+			ctx.stroke();
+		}
   }
 }
 
@@ -116,9 +119,24 @@ const Agents ={
     ctx.fillStyle = 'black';
     ctx.textBaseline = 'middle';
     data.datasets[0].data.forEach((projet, i) => {
-      ctx.fillText(projet.Agents, 10,y.getPixelForValue(i));
+			//console.log(projet);
+			if (Array.isArray(projet.Agents)){
+				const n = projet.Agents.length;
+				if (n==2){
+					ctx.fillText(projet.Agents[0], 10,y.getPixelForValue(i)+10);
+					ctx.fillText(projet.Agents[1], 10,y.getPixelForValue(i)-10);
+				}else if(n==3){
+					ctx.fillText(projet.Agents[0], 10,y.getPixelForValue(i)+12);
+					ctx.fillText(projet.Agents[1], 10,y.getPixelForValue(i));
+					ctx.fillText(projet.Agents[2], 10,y.getPixelForValue(i)-12);
+				}else{
+					ctx.fillText(projet.Agents, 10,y.getPixelForValue(i));
+				}
+			}else{
+				ctx.fillText(projet.Agents, 10,y.getPixelForValue(i));
+			}
     });
-    ctx.fillText('Agents', 10,top-20);
+		ctx.fillText('Agents', 10,top-20);
     ctx.restore();
   }
 }
@@ -129,7 +147,7 @@ const config = {
   options: {
     layout:{
       padding: {
-        left: 100
+				left: 200
       }
     },
     indexAxis: 'y',
@@ -222,6 +240,7 @@ function creerlisteProjets(tableauGrist, tableauProjets, colonnes){
 			ligne[colonnes.Quotite],
 			ligne[colonnes.Priorite]);
 		tableauProjets.push(projet);
+		//console.log(ligne);
 	});
 
 }
@@ -243,9 +262,9 @@ grist.onRecords((table, mappings) => {
 		  document.getElementById('diagrammeGantt'),
 		  config
 		);
-		console.log('Grist onRecords');
+		//console.log('Grist onRecords');
 		console.log(tableau);
-		console.log(colonnes);
+		//console.log(colonnes);
 		console.log(listeProjets);
     }
 	else{
