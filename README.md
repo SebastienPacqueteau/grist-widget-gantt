@@ -17,8 +17,8 @@ Le diagramme Gantt est proposé ici est basé sur le tutoriel suivant https://ww
 
 
 ## ToDo :
-- [ ] mettre une bare de défilement
+- [x] mettre une bare de défilement
 - [ ] modifier la légende
-- [ ] Améliorer l'affichage des boutons pour faire défiler les mois
+- [x] Améliorer l'affichage des boutons pour faire défiler les mois
 - [ ] ajouter des filtres en bas
 - [ ] Connaitre les types de données à afficher sur le diagramme
