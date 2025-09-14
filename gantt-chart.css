@@ -21,7 +21,8 @@
 .canvasBoxFixe {
   /*
   /* TODO: barre de défilement pour les longues listes de projets */
-  max-height: 95%;
+  height: 1000px;
+  max-height: calc(75vh);
   overflow-y: scroll;
 }
 
@@ -34,9 +35,8 @@
   justify-content: center;
 }
 .chartBox {
-  width: 90%;
+  width: 95%;
   max-width: 1200px;
-  height: 80%;
   padding: 20px;
   border-radius: 20px;
   border: solid 3px rgba(53, 88, 162, 1);

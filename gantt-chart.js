@@ -101,7 +101,7 @@ const LigneJour = {
 			ctx.save();
 			ctx.beginPath();
 			ctx.lineWidth = 3;//largeur de la ligne
-			ctx.strokeStyle = 'black';//'rgba(53,88,162,1)'; //la couleur de la ligne 
+			ctx.strokeStyle = 'black';//'rgba(53,88,162,1)'; //la couleur de la ligne
 			ctx.setLineDash([6,6])
 			ctx.moveTo(x.getPixelForValue(aujourdhui),top);
 			ctx.lineTo(x.getPixelForValue(aujourdhui),bottom);
@@ -150,6 +150,7 @@ const config = {
 				left: 200
       }
     },
+		maintainAspectRatio : false,
     indexAxis: 'y',
     scales: {
       x: {
@@ -213,13 +214,6 @@ function ajouteMoisDate (date, objDate, nbMois){
 	objDate.setDate(parseInt(date.value.split('-')[2]));
 }
 
-/* TODO: barre de défilement pour les longues listes de projets */
-
-/*const canvasBoxBarreDefilement = document.querySelector('.canvasBoxBarreDefilement');
-if (listeProjets.length>10){
-	canvasBoxBarreDefilement.style.minHeight = `${listeProjets.length * 30}px`;
-}
-*/
 //console.log(canvasBoxBarreDefilement.style);
 
 
@@ -257,15 +251,27 @@ grist.onRecords((table, mappings) => {
 		colonnes = mappings;
 		//nomTableau = ;
 		creerlisteProjets(tableau, listeProjets, colonnes);
-		// Création du diagramme après initialisation du module Grist:
+
+
 		diagrammeGantt = new Chart(
 		  document.getElementById('diagrammeGantt'),
 		  config
 		);
-		//console.log('Grist onRecords');
-		console.log(tableau);
-		//console.log(colonnes);
-		console.log(listeProjets);
+
+		// Création du diagramme après initialisation du module Grist:
+		const canvasBoxBarreDefilement = document.querySelector('.canvasBoxBarreDefilement');
+		if (listeProjets.length>5) {
+			canvasBoxBarreDefilement.style.height = `${listeProjets.length * 50}px`;
+		}else{
+			canvasBoxBarreDefilement.style.height = '250px';
+		}
+		console.log(document.querySelector('.canvasBoxFixe').style.height);
+		console.log(document.querySelector('.canvasBoxFixe').style.maxHeight);
+
+
+		/* TODO: barre de défilement pour les longues listes de projets */
+
+
     }
 	else{
 		alert("Please map all columns")
