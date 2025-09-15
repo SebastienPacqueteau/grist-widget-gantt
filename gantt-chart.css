@@ -35,8 +35,8 @@
   justify-content: center;
 }
 .chartBox {
-  width: 95%;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1600px;
   padding: 20px;
   border-radius: 20px;
   border: solid 3px rgba(53, 88, 162, 1);

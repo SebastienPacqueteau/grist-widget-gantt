@@ -1,9 +1,3 @@
-/*
-*
-*** Code pour interagir avec Grist
-*
-*/
-
 // ====================================
 // ==== Configuration pour Grist ======
 // ====================================
@@ -28,6 +22,7 @@ let colonnesNecessaires = [
   {name: 'Priorite',title: "Priorite du projet pour le service et la direction",type: 'Any',optional: true}
 ];
 
+//Création d'un objet Projet pour simplifier le passage du tableau d'objet grist au tableau d'objet chartJS
 class Projet{
 	constructor(nomProjet,dateDebut,dateFin,agents,service,sousDirection, quotite,priorite){
 		//this.infoSiret = infoSiret.results[0];
@@ -85,9 +80,6 @@ const data = {
     barPercentage: 0.5 //hauteur des bars
   }]
 };
-//console.log(listeProjets);
-//console.log(data);
-
 
 //Objet pour définir la ligne du jour
 const LigneJour = {
@@ -171,7 +163,10 @@ const config = {
   },
   plugins: [LigneJour, Agents]
 };
-//console.log(config);
+
+// ==========================================
+// ==== fonctions pour changer les mois =====
+// ==========================================
 
 function moisPrecedent(){
   dateDebutGantt.setMonth(dateDebutGantt.getMonth() -1);
@@ -214,10 +209,18 @@ function ajouteMoisDate (date, objDate, nbMois){
 	objDate.setDate(parseInt(date.value.split('-')[2]));
 }
 
-//console.log(canvasBoxBarreDefilement.style);
+function telechargementJPEG(){
+	document.getElementById('imgGanttLink').href = diagrammeGantt.toBase64Image('image/jpeg', 1);
+	alert();
+}
 
+function telechargeGantt(uri, name) {
+    var link = document.createElement("a");
+		link.download = `${formatageDate(new Date())}_Diagramme-Gantt.jpg`;
+    link.href = diagrammeGantt.toBase64Image('image/jpeg', 1);
+    link.click();
+}
 
-/* TODO: Connexion aux tables de grist à faire */
 // ====================================
 // ==== fonctions propres à Grist =====
 // ====================================
@@ -234,46 +237,34 @@ function creerlisteProjets(tableauGrist, tableauProjets, colonnes){
 			ligne[colonnes.Quotite],
 			ligne[colonnes.Priorite]);
 		tableauProjets.push(projet);
-		//console.log(ligne);
 	});
 
 }
 
 grist.ready({
+	onEditOptions() {
+				telechargeGantt('Télécharger le Gantt');
+  },
   columns: colonnesNecessaires,
-	requiredAccess: 'full',
+	requiredAccess: 'read table',
 	allowSelectBy: false
 });
 
-grist.onRecords((table, mappings) => {
-	if (mappings) {
-		tableau = table;
-		colonnes = mappings;
-		//nomTableau = ;
-		creerlisteProjets(tableau, listeProjets, colonnes);
-
-
-		diagrammeGantt = new Chart(
-		  document.getElementById('diagrammeGantt'),
-		  config
-		);
-
-		// Création du diagramme après initialisation du module Grist:
-		const canvasBoxBarreDefilement = document.querySelector('.canvasBoxBarreDefilement');
-		if (listeProjets.length>5) {
-			canvasBoxBarreDefilement.style.height = `${listeProjets.length * 50}px`;
-		}else{
-			canvasBoxBarreDefilement.style.height = '250px';
-		}
-		console.log(document.querySelector('.canvasBoxFixe').style.height);
-		console.log(document.querySelector('.canvasBoxFixe').style.maxHeight);
-
-
-		/* TODO: barre de défilement pour les longues listes de projets */
-
-
-    }
-	else{
-		alert("Please map all columns")
+async function creationDiagrammeGantt (){
+	const tableau = await grist.fetchSelectedTable({format: 'rows'});
+	const colonnes = await grist.sectionApi.mappings();
+	creerlisteProjets(tableau, listeProjets, colonnes);
+	diagrammeGantt = new Chart(
+		document.getElementById('diagrammeGantt'),
+		config
+	);
+	const canvasBoxBarreDefilement = document.querySelector('.canvasBoxBarreDefilement');
+	if (listeProjets.length>5) {
+		canvasBoxBarreDefilement.style.height = `${listeProjets.length * 50}px`;
+	}else{
+		canvasBoxBarreDefilement.style.height = '250px';
 	}
-});
+	//console.log("test seb:",testColonne, colonnes);
+}
+
+creationDiagrammeGantt();
