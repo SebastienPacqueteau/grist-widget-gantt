@@ -214,11 +214,23 @@ function telechargementJPEG(){
 	alert();
 }
 
-function telechargeGantt(uri, name) {
+function telechargementJPEG() {
     var link = document.createElement("a");
 		link.download = `${formatageDate(new Date())}_Diagramme-Gantt.jpg`;
     link.href = diagrammeGantt.toBase64Image('image/jpeg', 1);
     link.click();
+}
+
+function telechargementPNG() {
+    var link = document.createElement("a");
+		link.download = `${formatageDate(new Date())}_Diagramme-Gantt.png`;
+    link.href = diagrammeGantt.toBase64Image();
+    link.click();
+}
+
+function basculerPanneauOption() {
+		const sidebar = document.getElementById('sidebar');
+		sidebar.classList.toggle('collapsed');
 }
 
 // ====================================
@@ -243,7 +255,8 @@ function creerlisteProjets(tableauGrist, tableauProjets, colonnes){
 
 grist.ready({
 	onEditOptions() {
-				telechargeGantt('Télécharger le Gantt');
+		basculerPanneauOption();
+		//telechargeGantt();
   },
   columns: colonnesNecessaires,
 	requiredAccess: 'read table',
