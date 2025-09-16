@@ -115,7 +115,6 @@ const Agents ={
     ctx.fillStyle = 'black';
     ctx.textBaseline = 'middle';
     data.datasets[0].data.forEach((projet, i) => {
-			//console.log(projet);
 			if (Array.isArray(projet.Agents)){
 				const n = projet.Agents.length;
 				if (n==2){
@@ -162,15 +161,15 @@ const config = {
     plugins: {
       legend: {
         display: false //suppression de la légende / série sur le graphique
-			},
-			tooltip: {
-				callbacks: {
-					beforeTitle: function(context){
-							console.log('test légende', context);
-							return 'Legende à modifier';
-					}
+		},
+		tooltip: {
+			displayColors: false,
+			callbacks: {
+				label: function (context) {
+					return infoBulle(context);
 				}
 			}
+		}
     }
   },
   plugins: [LigneJour, Agents]
@@ -202,7 +201,6 @@ function moisSuivant(){
 function moisMilieu(date){
 	ajouteMoisDate (date, dateDebutGantt, -4)
 	ajouteMoisDate (date, dateFinGantt, 4)
-	//console.log(dateDebutGantt,dateFinGantt,date.value);
 
 	diagrammeGantt.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
   diagrammeGantt.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
@@ -243,6 +241,29 @@ function telechargementPNG() {
 function basculerPanneauOption() {
 		const sidebar = document.getElementById('sidebar');
 		sidebar.classList.toggle('collapsed');
+}
+
+function infoBulle(context) {
+	let labels = []; 
+	const data = context.dataset.data[context.dataIndex];
+
+	labels.push(`Date debut : ${formatageDate(data.x[0])}`); 
+	labels.push(`Date fin : ${formatageDate(data.x[1])}`); 
+	if (Array.isArray(data.Agents)){
+		if (data.Agents.length){
+			labels.push('liste des agents :');
+			data.Agents.forEach ((agent, i)=>{
+				labels.push(` - ${agent}`);
+			});
+		}
+	}
+	if (data.Quotite){
+		labels.push(`Quotite : ${data.Quotite * 100} %`); 
+	}
+	if (!data.Priorite){
+		labels.push("pas de Priorite renseigné");
+	}
+	return labels;
 }
 
 // ====================================
@@ -293,7 +314,6 @@ async function creationDiagrammeGantt (){
 	}else{
 		canvasBoxBarreDefilement.style.height = '250px';
 	}
-	//console.log("test seb:",testColonne, colonnes);
 }
 
 creationDiagrammeGantt();
