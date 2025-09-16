@@ -36,6 +36,10 @@ class Projet{
 	}
 }
 
+let nbMaxAgents = 1; // nombre de personnes au maximum par projet
+
+// TODO: on sait maintenant que le connait le nombre max de personnes sur un projet, on peut ajuster la hauteur du projet et ajuster la légende
+
 // ====================================
 // ==== Configuration du diagramme ====
 // ====================================
@@ -158,7 +162,15 @@ const config = {
     plugins: {
       legend: {
         display: false //suppression de la légende / série sur le graphique
-      }
+			},
+			tooltip: {
+				callbacks: {
+					beforeTitle: function(context){
+							console.log('test légende', context);
+							return 'Legende à modifier';
+					}
+				}
+			}
     }
   },
   plugins: [LigneJour, Agents]
@@ -249,8 +261,12 @@ function creerlisteProjets(tableauGrist, tableauProjets, colonnes){
 			ligne[colonnes.Quotite],
 			ligne[colonnes.Priorite]);
 		tableauProjets.push(projet);
+		if(Array.isArray(projet.Agents)){
+			if (projet.Agents.length > nbMaxAgents){
+				nbMaxAgents = projet.Agents.length;
+			}
+		}
 	});
-
 }
 
 grist.ready({
