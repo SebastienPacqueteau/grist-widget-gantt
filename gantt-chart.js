@@ -26,7 +26,7 @@ let colonnesNecessaires = [
 class Projet{
 	constructor(nomProjet,dateDebut,dateFin,agents,service,sousDirection, quotite,priorite,statut){
 		//this.infoSiret = infoSiret.results[0];
-		this.x = [dateDebut,dateFin];
+		this.x = [new Date(dateDebut).getTime(),new Date(dateFin).getTime()];
 		this.y = nomProjet;
 		this.agents = agents;
 		this.service = service;
@@ -92,7 +92,7 @@ const LigneJour = {
   //afterDatasetsDraw : utiliser cette fonction pour mettre au premier plan la ligne du jour
   //beforeDatasetsDraw : utiliser cette fonction pour mettre au second plan
   beforeDatasetsDraw(chart, args, pluginOptions){
-    const {ctx, data, chartArea: {top, bottom,left, rogjt} , scales: {x,y} } = chart;
+    const {ctx, data, chartArea: {top, bottom,left, right} , scales: {x,y} } = chart;
 		const aujourdhui = new Date();
 		if (aujourdhui>dateDebutGantt && aujourdhui<dateFinGantt){
 			ctx.save();
@@ -107,12 +107,13 @@ const LigneJour = {
   }
 }
 
+//Gauche du graphique
 const Agents ={
   id: 'Agents',
   beforeDatasetsDraw(chart, args, pluginOptions){
-    const {ctx, data, chartArea: {top, bottom,left, rogjt} , scales: {x,y} } = chart;
+    const {ctx, data, chartArea: {top, bottom,left, right} , scales: {x,y} } = chart;
     ctx.save();
-    ctx.font = 'bolder 12px sans-serif';
+    ctx.font = '12px sans-serif';
     ctx.fillStyle = 'black';
     ctx.textBaseline = 'middle';
     data.datasets[0].data.forEach((projet, i) => {
@@ -132,9 +133,60 @@ const Agents ={
 				ctx.fillText(projet.agents, 10,y.getPixelForValue(i));
 			}
     });
+    ctx.font = 'bolder 12px sans-serif';
 		ctx.fillText('Agents', 10,top-20);
     ctx.restore();
   }
+}
+
+//info à droite du graphique
+const statut ={
+	id: 'Statut',
+  beforeDatasetsDraw(chart, args, pluginOptions){
+    const {ctx, data, chartArea: {top, bottom,left, right} , scales: {x,y} } = chart;
+    ctx.save();
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = 'black';
+    ctx.textBaseline = 'middle';
+    data.datasets[0].data.forEach((projet, i) => {
+			if(projet.statut){
+				ctx.fillText(projet.statut, right + 20,y.getPixelForValue(i));
+			}
+    });
+    ctx.font = 'bolder 12px sans-serif';
+		ctx.fillText('statut', right + 20,top-20);
+    ctx.restore();
+  }
+}
+
+//info dans les barres
+const textBarre = {
+	id: 'Texte Barre',
+	beforeDatasetsDraw(chart, args, pluginOptions){
+		const {ctx, data, chartArea: {top, bottom,left, right} , scales: {x,y} } = chart;
+		let positionX = 0;
+		let titreBarre = "";
+		ctx.save();
+		ctx.font = '12px sans-serif';
+		ctx.fillStyle = 'black';
+		ctx.textBaseline = 'middle';
+		data.datasets[0].data.forEach((projet, i) => {
+			titreBarre = "";
+			if (projet.service){
+				titreBarre = projet.service;
+				if (projet.sousDirection){
+					titreBarre = titreBarre + " / " + projet.sousDirection;
+				}
+			}
+			if (projet.x[0]>x.min){
+				positionX = left + (projet.x[0]-x.min)*x.width/(x.max-x.min);
+			}else{
+				positionX = left;
+			}
+			ctx.fillText(titreBarre, positionX + 20,y.getPixelForValue(i));
+		});
+		ctx.restore();
+	}
 }
 
 const config = {
@@ -143,7 +195,8 @@ const config = {
   options: {
     layout:{
       padding: {
-				left: 200
+				left: 200,
+				right: 100
       }
     },
 		maintainAspectRatio : false,
@@ -155,62 +208,47 @@ const config = {
         time: {
           unit: "month"
         },
-        min: dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"}),//date minimal affichée
-        max: dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"})//date maximal affichée
+				min: dateDebutGantt.getTime(),//dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"}),//date minimal affichée
+				max: dateFinGantt.getTime()//dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"})//date maximal affichée
       }
     },
     plugins: {
       legend: {
         display: false //suppression de la légende / série sur le graphique
-		},
-		tooltip: {
-			displayColors: false,
-			callbacks: {
-				label: function (context) {
-					return infoBulle(context);
+			},
+			tooltip: {
+				displayColors: false,
+				callbacks: {
+					label: function (context) {
+						return infoBulle(context);
+					}
 				}
 			}
-		}
     }
   },
-  plugins: [LigneJour, Agents]
+	plugins: [LigneJour, Agents, statut, textBarre]
 };
 
 // ==========================================
 // ==== fonctions pour changer les mois =====
 // ==========================================
 
-function moisPrecedent(){
-  dateDebutGantt.setMonth(dateDebutGantt.getMonth() -1);
-  dateFinGantt.setMonth(dateFinGantt.getMonth() -1);
+function decalageMois(nbMois){
+	dateDebutGantt.setMonth(dateDebutGantt.getMonth() + nbMois);
+  dateFinGantt.setMonth(dateFinGantt.getMonth() + nbMois);
 
-	diagrammeGantt.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  diagrammeGantt.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
+	diagrammeGantt.config.options.scales.x.min = dateDebutGantt.getTime();
+  diagrammeGantt.config.options.scales.x.max = dateFinGantt.getTime();
   diagrammeGantt.update();
-
-}
-function moisSuivant(){
-  dateDebutGantt.setMonth(dateDebutGantt.getMonth() +1);
-  dateFinGantt.setMonth(dateFinGantt.getMonth() +1);
-
-	diagrammeGantt.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  diagrammeGantt.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  diagrammeGantt.update();
-
 }
 
 function moisMilieu(date){
 	ajouteMoisDate (date, dateDebutGantt, -4)
 	ajouteMoisDate (date, dateFinGantt, 4)
 
-	diagrammeGantt.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  diagrammeGantt.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
+	diagrammeGantt.config.options.scales.x.min = dateDebutGantt.getTime();
+  diagrammeGantt.config.options.scales.x.max = dateFinGantt.getTime();
   diagrammeGantt.update();
-}
-
-function formatageDate(date){
-	// retour la date sous le format "2025-09-03" en ayant en entrée un objet Date()
-	return date.toLocaleString("en-CA",{dateStyle: "short"});
 }
 
 function ajouteMoisDate (date, objDate, nbMois){
@@ -226,17 +264,19 @@ function telechargementJPEG(){
 }
 
 function telechargementJPEG() {
-    var link = document.createElement("a");
-		link.download = `${formatageDate(new Date())}_Diagramme-Gantt.jpg`;
-    link.href = diagrammeGantt.toBase64Image('image/jpeg', 1);
-    link.click();
+  var link = document.createElement("a");
+	const aujourdhui = new Date();
+	link.download = `${aujourdhui.getFullYear()}-${aujourdhui.getMonth()+1}-${aujourdhui.getDate()}_Diagramme-Gantt.jpg`;
+  link.href = diagrammeGantt.toBase64Image('image/jpeg', 1);
+  link.click();
 }
 
 function telechargementPNG() {
-    var link = document.createElement("a");
-		link.download = `${formatageDate(new Date())}_Diagramme-Gantt.png`;
-    link.href = diagrammeGantt.toBase64Image();
-    link.click();
+	var link = document.createElement("a");
+	const aujourdhui = new Date();
+	link.download = `${aujourdhui.getFullYear()}-${aujourdhui.getMonth()+1}-${aujourdhui.getDate()}_Diagramme-Gantt.png`;
+  link.href = diagrammeGantt.toBase64Image();
+  link.click();
 }
 
 function basculerPanneauOption() {
@@ -248,8 +288,8 @@ function infoBulle(context) {
 	let labels = [];
 	const data = context.dataset.data[context.dataIndex];
 
-	labels.push(`Date debut : ${formatageDate(data.x[0])}`);
-	labels.push(`Date fin : ${formatageDate(data.x[1])}`);
+	labels.push(`Date debut : ${new Date(data.x[0]).toLocaleString("fr-FR",{dateStyle: "short"})}`);
+	labels.push(`Date fin : ${new Date(data.x[0]).toLocaleString("fr-FR",{dateStyle: "short"})}`);
 	if (Array.isArray(data.agents)){
 		if (data.agents.length){
 			labels.push('liste des agents :');
@@ -261,8 +301,8 @@ function infoBulle(context) {
 	if (data.quotite){
 		labels.push(`Quotite : ${data.quotite * 100} %`);
 	}
-	if (!data.priorite){
-		labels.push("pas de Priorite renseigné");
+	if (data.priorite){
+		labels.push(`Priorite : ${data.priorite}`);
 	}
 	return labels;
 }
@@ -306,7 +346,7 @@ async function creationDiagrammeGantt (){
 	const tableau = await grist.fetchSelectedTable({format: 'rows'});
 	const colonnes = await grist.sectionApi.mappings();
 	creerlisteProjets(tableau, listeProjets, colonnes);
-	console.log('creationDiagrammeGantt', tableau, listeProjets, colonnes);
+	//console.log('creationDiagrammeGantt', tableau, listeProjets, colonnes);
 	diagrammeGantt = new Chart(
 		document.getElementById('diagrammeGantt'),
 		config
@@ -317,6 +357,7 @@ async function creationDiagrammeGantt (){
 	}else{
 		canvasBoxBarreDefilement.style.height = '250px';
 	}
+	console.log('creation Diag gantt : ', diagrammeGantt);
 }
 
 creationDiagrammeGantt();

@@ -4,23 +4,7 @@
   font-family: sans-serif;
 }
 
-/*
-.chartMenu {
-  width: 100vw;
-  height: 40px;
-  background-color: #1A1A1A;
-  color: rgba(255, 26, 104, 1);
-}
-
-.chartMenu p {
-  padding: 10px;
-  font-size: 20px;
-}
-*/
-
 .canvasBoxFixe {
-  /*
-  /* TODO: barre de défilement pour les longues listes de projets */
   height: 1000px;
   max-height: calc(75vh);
   overflow-y: scroll;
@@ -42,10 +26,6 @@
   border: solid 3px rgba(53, 88, 162, 1);
   background: white;
 }
-
-
-
-/* A modifier */
 
 .wrapper {
     display: flex;
