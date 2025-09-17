@@ -5,34 +5,35 @@ let diagrammeGantt = null; //Création d'une variable qui représente l'objet ch
 
 let colonnesNecessaires = [
 	{
-    name: 'Projet',
+		name: 'projet',
     title: "Nom du projet",
     type: 'Any', // optional type of the column, // Int (Integer column), Numeric (Numeric column), Text, Date, DateTime, Bool (Toggle column), Choice, ChoiceList, Ref (Reference column), RefList (Reference List), Attachments.
 		optional: false // if column is optional.
 	},
-	{name: 'NbAgents',title: "Nombre d'Agents sur le projet",type: 'Int',optional: true},
-	{name: 'Agents',title: "Nom du ou des agent(s)",type: 'Any',optional: false},
-  {name: 'Service',title: "Service",type: 'Any', optional: false},
-  {name: 'SousDirection',title: "sous-direction",type: 'Any', optional: false},
-	{name: 'AutoriteHierarchique',title: "Responsable du ou des agent(s)",type: 'Any',optional: false},
-  {name: 'Description',title: "Description du projet",type: 'Text',optional: true},
-  {name: 'DateDebut',title: "Date de début de la mission",type: 'Date',optional: false},
-  {name: 'DateFin',title: "Date de fin de la mission",type: 'Date',optional: false},
-	{name: 'Quotite',title: "Quotité du temps sur le projet (en %)",type: 'Any',optional: false},
-  {name: 'Priorite',title: "Priorite du projet pour le service et la direction",type: 'Any',optional: true}
+	{name: 'agents',title: "Nom du ou des agent(s)",type: 'Any',optional: false},
+	{name: 'service',title: "Service",type: 'Any', optional: false},
+	{name: 'sousDirection',title: "sous-direction",type: 'Any', optional: false},
+	{name: 'contact',title: "Contact du responsable projet",type: 'Any',optional: false},
+	{name: 'description',title: "Description du projet",type: 'Text',optional: true},
+	{name: 'dateDebut',title: "Date de début de la mission",type: 'Date',optional: false},
+	{name: 'dateFin',title: "Date de fin de la mission",type: 'Date',optional: false},
+	{name: 'quotite',title: "Quotité du temps sur le projet (en %)",type: 'Any',optional: false},
+	{name: 'priorite',title: "Priorite du projet pour le service et la direction",type: 'Any',optional: true},
+	{name: 'statut',title: "Statut du projet",type: 'Any',optional: true}
 ];
 
 //Création d'un objet Projet pour simplifier le passage du tableau d'objet grist au tableau d'objet chartJS
 class Projet{
-	constructor(nomProjet,dateDebut,dateFin,agents,service,sousDirection, quotite,priorite){
+	constructor(nomProjet,dateDebut,dateFin,agents,service,sousDirection, quotite,priorite,statut){
 		//this.infoSiret = infoSiret.results[0];
 		this.x = [dateDebut,dateFin];
 		this.y = nomProjet;
-		this.Agents = agents;
-		this.Service = service;
-		this.SousDirection = sousDirection;
-		this.Quotite = quotite;
-		this.Priorite = priorite;
+		this.agents = agents;
+		this.service = service;
+		this.sousDirection = sousDirection;
+		this.quotite = quotite;
+		this.priorite = priorite;
+		this.statut = statut;
 	}
 }
 
@@ -115,20 +116,20 @@ const Agents ={
     ctx.fillStyle = 'black';
     ctx.textBaseline = 'middle';
     data.datasets[0].data.forEach((projet, i) => {
-			if (Array.isArray(projet.Agents)){
-				const n = projet.Agents.length;
+			if (Array.isArray(projet.agents)){
+				const n = projet.agents.length;
 				if (n==2){
-					ctx.fillText(projet.Agents[0], 10,y.getPixelForValue(i)+10);
-					ctx.fillText(projet.Agents[1], 10,y.getPixelForValue(i)-10);
+					ctx.fillText(projet.agents[0], 10,y.getPixelForValue(i)+10);
+					ctx.fillText(projet.agents[1], 10,y.getPixelForValue(i)-10);
 				}else if(n==3){
-					ctx.fillText(projet.Agents[0], 10,y.getPixelForValue(i)+12);
-					ctx.fillText(projet.Agents[1], 10,y.getPixelForValue(i));
-					ctx.fillText(projet.Agents[2], 10,y.getPixelForValue(i)-12);
+					ctx.fillText(projet.agents[0], 10,y.getPixelForValue(i)+12);
+					ctx.fillText(projet.agents[1], 10,y.getPixelForValue(i));
+					ctx.fillText(projet.agents[2], 10,y.getPixelForValue(i)-12);
 				}else{
-					ctx.fillText(projet.Agents, 10,y.getPixelForValue(i));
+					ctx.fillText(projet.agents, 10,y.getPixelForValue(i));
 				}
 			}else{
-				ctx.fillText(projet.Agents, 10,y.getPixelForValue(i));
+				ctx.fillText(projet.agents, 10,y.getPixelForValue(i));
 			}
     });
 		ctx.fillText('Agents', 10,top-20);
@@ -244,23 +245,23 @@ function basculerPanneauOption() {
 }
 
 function infoBulle(context) {
-	let labels = []; 
+	let labels = [];
 	const data = context.dataset.data[context.dataIndex];
 
-	labels.push(`Date debut : ${formatageDate(data.x[0])}`); 
-	labels.push(`Date fin : ${formatageDate(data.x[1])}`); 
-	if (Array.isArray(data.Agents)){
-		if (data.Agents.length){
+	labels.push(`Date debut : ${formatageDate(data.x[0])}`);
+	labels.push(`Date fin : ${formatageDate(data.x[1])}`);
+	if (Array.isArray(data.agents)){
+		if (data.agents.length){
 			labels.push('liste des agents :');
-			data.Agents.forEach ((agent, i)=>{
+			data.agents.forEach ((agent, i)=>{
 				labels.push(` - ${agent}`);
 			});
 		}
 	}
-	if (data.Quotite){
-		labels.push(`Quotite : ${data.Quotite * 100} %`); 
+	if (data.quotite){
+		labels.push(`Quotite : ${data.quotite * 100} %`);
 	}
-	if (!data.Priorite){
+	if (!data.priorite){
 		labels.push("pas de Priorite renseigné");
 	}
 	return labels;
@@ -273,18 +274,19 @@ function infoBulle(context) {
 function creerlisteProjets(tableauGrist, tableauProjets, colonnes){
 	let projet = null;
 	tableauGrist.forEach((ligne, i) => {
-		projet = new Projet(ligne[colonnes.Projet],
-			ligne[colonnes.DateDebut],
-			ligne[colonnes.DateFin],
-			ligne[colonnes.Agents],
-			ligne[colonnes.Service],
-			ligne[colonnes.SousDirection],
-			ligne[colonnes.Quotite],
-			ligne[colonnes.Priorite]);
+		projet = new Projet(ligne[colonnes.projet],
+			ligne[colonnes.dateDebut],
+			ligne[colonnes.dateFin],
+			ligne[colonnes.agents],
+			ligne[colonnes.service],
+			ligne[colonnes.sousDirection],
+			ligne[colonnes.quotite],
+			ligne[colonnes.priorite],
+			ligne[colonnes.statut]);
 		tableauProjets.push(projet);
-		if(Array.isArray(projet.Agents)){
-			if (projet.Agents.length > nbMaxAgents){
-				nbMaxAgents = projet.Agents.length;
+		if(Array.isArray(projet.agents)){
+			if (projet.agents.length > nbMaxAgents){
+				nbMaxAgents = projet.agents.length;
 			}
 		}
 	});
@@ -304,6 +306,7 @@ async function creationDiagrammeGantt (){
 	const tableau = await grist.fetchSelectedTable({format: 'rows'});
 	const colonnes = await grist.sectionApi.mappings();
 	creerlisteProjets(tableau, listeProjets, colonnes);
+	console.log('creationDiagrammeGantt', tableau, listeProjets, colonnes);
 	diagrammeGantt = new Chart(
 		document.getElementById('diagrammeGantt'),
 		config
