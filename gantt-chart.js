@@ -162,7 +162,7 @@ const statut ={
 //info dans les barres
 const textBarre = {
 	id: 'Texte Barre',
-	beforeDatasetsDraw(chart, args, pluginOptions){
+	afterDatasetsDraw(chart, args, pluginOptions){
 		const {ctx, data, chartArea: {top, bottom,left, right} , scales: {x,y} } = chart;
 		let positionX = 0;
 		let titreBarre = "";
@@ -178,11 +178,15 @@ const textBarre = {
 					titreBarre = titreBarre + " / " + projet.sousDirection;
 				}
 			}
-			if (projet.x[0]>x.min){
+			if (projet.x[1]<x.ticks[0].value || projet.x[0]>x.ticks[7].value ){
+				positionX = 0;
+				titreBarre = "";
+			}else if (projet.x[0]>x.ticks[0].value){
 				positionX = left + (projet.x[0]-x.min)*x.width/(x.max-x.min);
-			}else{
+			}else {
 				positionX = left;
 			}
+			//console.log('textBarre', x.ticks[0].value, x.ticks[7].value);
 			ctx.fillText(titreBarre, positionX + 20,y.getPixelForValue(i));
 		});
 		ctx.restore();
@@ -357,7 +361,10 @@ async function creationDiagrammeGantt (){
 	}else{
 		canvasBoxBarreDefilement.style.height = '250px';
 	}
-	console.log('creation Diag gantt : ', diagrammeGantt);
+	let listeTables = await grist.docApi.listTables();
+	let table1 = await grist.getTable(listeTables[0]);
+	//let table2 = await grist.getTable(listeTables[1]);
+	console.log('creation Diag gantt : ', listeTables, await grist.docApi.fetchTable(listeTables[0],{format: 'rows'}), tableau, await grist.getSelectedTableId());
 }
 
 creationDiagrammeGantt();
