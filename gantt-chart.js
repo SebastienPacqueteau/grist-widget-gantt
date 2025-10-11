@@ -1,32 +1,45 @@
-/*
-*
-*** Code pour interagir avec Grist
-*
-*/
-
 // ====================================
 // ==== Configuration pour Grist ======
 // ====================================
+let diagrammeGantt = null; //Création d'une variable qui représente l'objet chartJS
 
 let colonnesNecessaires = [
 	{
-    name: 'Projet',
+		name: 'projet',
     title: "Nom du projet",
     type: 'Any', // optional type of the column, // Int (Integer column), Numeric (Numeric column), Text, Date, DateTime, Bool (Toggle column), Choice, ChoiceList, Ref (Reference column), RefList (Reference List), Attachments.
 		optional: false // if column is optional.
 	},
-	{name: 'NbAgents',title: "Nombre d'Agents sur le projet",type: 'Int',optional: false},
-  {name: 'Agents',title: "liste des agents",type: 'Any',optional: false},
-  {name: 'Service',title: "Service",type: 'Any', optional: false},
-  {name: 'SousDirection',title: "sous-direction",type: 'Any', optional: false},
-	{name: 'AutoriteHierarchique',title: "Responsable du ou des agent(s)",type: 'Any',optional: false},
-  {name: 'Description',title: "Description du projet",type: 'Text',optional: true},
-  {name: 'DateDebut',title: "Date de début de la mission",type: 'Date',optional: false},
-  {name: 'DateFin',title: "Date de fin de la mission",type: 'Date',optional: false},
-  {name: 'Quotite',title: "Quotité du temps de l'agent (en %)",type: 'Int',optional: false},
-  {name: 'Priorite',title: "Priorite du projet pour le service et la direction",type: 'Int',optional: true}
+	{name: 'agents',title: "Nom du ou des agent(s)",type: 'Any',optional: false},
+	{name: 'service',title: "Service",type: 'Any', optional: false},
+	{name: 'sousDirection',title: "sous-direction",type: 'Any', optional: false},
+	{name: 'contact',title: "Contact du responsable projet",type: 'Any',optional: false},
+	{name: 'description',title: "Description du projet",type: 'Text',optional: true},
+	{name: 'dateDebut',title: "Date de début de la mission",type: 'Date',optional: false},
+	{name: 'dateFin',title: "Date de fin de la mission",type: 'Date',optional: false},
+	{name: 'quotite',title: "Quotité du temps sur le projet (en %)",type: 'Any',optional: false},
+	{name: 'priorite',title: "Priorite du projet pour le service et la direction",type: 'Any',optional: true},
+	{name: 'statut',title: "Statut du projet",type: 'Any',optional: true}
 ];
 
+//Création d'un objet Projet pour simplifier le passage du tableau d'objet grist au tableau d'objet chartJS
+class Projet{
+	constructor(nomProjet,dateDebut,dateFin,agents,service,sousDirection, quotite,priorite,statut){
+		//this.infoSiret = infoSiret.results[0];
+		this.x = [new Date(dateDebut).getTime(),new Date(dateFin).getTime()];
+		this.y = nomProjet;
+		this.agents = agents;
+		this.service = service;
+		this.sousDirection = sousDirection;
+		this.quotite = quotite;
+		this.priorite = priorite;
+		this.statut = statut;
+	}
+}
+
+let nbMaxAgents = 1; // nombre de personnes au maximum par projet
+
+// TODO: on sait maintenant que le connait le nombre max de personnes sur un projet, on peut ajuster la hauteur du projet et ajuster la légende
 
 // ====================================
 // ==== Configuration du diagramme ====
@@ -41,19 +54,7 @@ dateFinGantt.setMonth(dateFinGantt.getMonth() + 6);
 
 
 //liste des projets à connecter à un tableau Grist
-let listeProjets = [
-	{x:['2025-09-01','2025-09-02'], y:'Projet 1', Agents: 'Agent 1', Service: 'Service 1', SousDirection: 'SD1', Quotite: '10%', Priorite:'P1'},
-	{x:['2025-08-01','2025-10-02'], y:'Projet 2', Agents: 'Agent 2', Service: 'Service 2', SousDirection: 'SD2', Quotite: '20%', Priorite:'P2'},
-	{x:['2025-08-01','2025-10-02'], y:'Projet 3', Agents: 'Agent 3', Service: 'Service 3', SousDirection: 'SD3', Quotite: '30%', Priorite:'P3'},
-	{x:['2025-08-15','2025-09-01'], y:'Projet 4', Agents: 'Agent 4', Service: 'Service 4', SousDirection: 'SD4', Quotite: '40%', Priorite:'P1'},
-	{x:['2025-08-01','2025-10-02'], y:'Projet 5', Agents: 'Agent 5', Service: 'Service 5', SousDirection: 'SD5', Quotite: '50%', Priorite:'P2'},
-	{x:['2025-08-15','2025-09-01'], y:'Projet 6', Agents: 'Agent 6', Service: 'Service 6', SousDirection: 'SD6', Quotite: '60%', Priorite:'P3'},
-	{x:['2025-08-01','2025-10-02'], y:'Projet 7', Agents: 'Agent 7', Service: 'Service 7', SousDirection: 'SD7', Quotite: '70%', Priorite:'P1'},
-	{x:['2025-08-15','2025-09-01'], y:'Projet 8', Agents: 'Agent 8', Service: 'Service 8', SousDirection: 'SD8', Quotite: '80%', Priorite:'P1'},
-	{x:['2025-08-01','2025-10-02'], y:'Projet 9', Agents: 'Agent 9', Service: 'Service 9', SousDirection: 'SD9', Quotite: '90%', Priorite:'P2'},
-	{x:['2025-08-15','2025-09-01'], y:'Projet 10', Agents: 'Agent 10', Service: 'Service 10', SousDirection: 'SD10', Quotite: '55%', Priorite:'P2'},
-	{x:['2025-09-01','2025-09-10'], y:'Projet 11', Agents: 'Agent 11', Service: 'Service 11', SousDirection: 'SD10', Quotite: '45%', Priorite:'P2'}
-];
+let listeProjets = [];
 
 //Données pour le graphique
 const data = {
@@ -84,9 +85,6 @@ const data = {
     barPercentage: 0.5 //hauteur des bars
   }]
 };
-//console.log(listeProjets);
-//console.log(data);
-
 
 //Objet pour définir la ligne du jour
 const LigneJour = {
@@ -94,32 +92,105 @@ const LigneJour = {
   //afterDatasetsDraw : utiliser cette fonction pour mettre au premier plan la ligne du jour
   //beforeDatasetsDraw : utiliser cette fonction pour mettre au second plan
   beforeDatasetsDraw(chart, args, pluginOptions){
-    const {ctx, data, chartArea: {top, bottom,left, rogjt} , scales: {x,y} } = chart;
-    ctx.save();
-    ctx.beginPath();
-    ctx.lineWidth = 3;//largeur de la ligne
-    ctx.strokeStyle = 'rgba(255,26,104,1)'; //la couleur de la ligne
-    ctx.setLineDash([6,6])
-    ctx.moveTo(x.getPixelForValue(new Date()),top);
-    ctx.lineTo(x.getPixelForValue(new Date()),bottom);
-    ctx.stroke();
+    const {ctx, data, chartArea: {top, bottom,left, right} , scales: {x,y} } = chart;
+		const aujourdhui = new Date();
+		if (aujourdhui>dateDebutGantt && aujourdhui<dateFinGantt){
+			ctx.save();
+			ctx.beginPath();
+			ctx.lineWidth = 3;//largeur de la ligne
+			ctx.strokeStyle = 'black';//'rgba(53,88,162,1)'; //la couleur de la ligne
+			ctx.setLineDash([6,6])
+			ctx.moveTo(x.getPixelForValue(aujourdhui),top);
+			ctx.lineTo(x.getPixelForValue(aujourdhui),bottom);
+			ctx.stroke();
+		}
   }
 }
 
+//Gauche du graphique
 const Agents ={
   id: 'Agents',
   beforeDatasetsDraw(chart, args, pluginOptions){
-    const {ctx, data, chartArea: {top, bottom,left, rogjt} , scales: {x,y} } = chart;
+    const {ctx, data, chartArea: {top, bottom,left, right} , scales: {x,y} } = chart;
     ctx.save();
-    ctx.font = 'bolder 12px sans-serif';
+    ctx.font = '12px sans-serif';
     ctx.fillStyle = 'black';
     ctx.textBaseline = 'middle';
     data.datasets[0].data.forEach((projet, i) => {
-      ctx.fillText(projet.Agents, 10,y.getPixelForValue(i));
+			if (Array.isArray(projet.agents)){
+				const n = projet.agents.length;
+				if (n==2){
+					ctx.fillText(projet.agents[0], 10,y.getPixelForValue(i)+10);
+					ctx.fillText(projet.agents[1], 10,y.getPixelForValue(i)-10);
+				}else if(n==3){
+					ctx.fillText(projet.agents[0], 10,y.getPixelForValue(i)+12);
+					ctx.fillText(projet.agents[1], 10,y.getPixelForValue(i));
+					ctx.fillText(projet.agents[2], 10,y.getPixelForValue(i)-12);
+				}else{
+					ctx.fillText(projet.agents, 10,y.getPixelForValue(i));
+				}
+			}else{
+				ctx.fillText(projet.agents, 10,y.getPixelForValue(i));
+			}
     });
-    ctx.fillText('Agents', 10,top-20);
+    ctx.font = 'bolder 12px sans-serif';
+		ctx.fillText('Agents', 10,top-20);
     ctx.restore();
   }
+}
+
+//info à droite du graphique
+const statut ={
+	id: 'Statut',
+  beforeDatasetsDraw(chart, args, pluginOptions){
+    const {ctx, data, chartArea: {top, bottom,left, right} , scales: {x,y} } = chart;
+    ctx.save();
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = 'black';
+    ctx.textBaseline = 'middle';
+    data.datasets[0].data.forEach((projet, i) => {
+			if(projet.statut){
+				ctx.fillText(projet.statut, right + 20,y.getPixelForValue(i));
+			}
+    });
+    ctx.font = 'bolder 12px sans-serif';
+		ctx.fillText('statut', right + 20,top-20);
+    ctx.restore();
+  }
+}
+
+//info dans les barres
+const textBarre = {
+	id: 'Texte Barre',
+	afterDatasetsDraw(chart, args, pluginOptions){
+		const {ctx, data, chartArea: {top, bottom,left, right} , scales: {x,y} } = chart;
+		let positionX = 0;
+		let titreBarre = "";
+		ctx.save();
+		ctx.font = '12px sans-serif';
+		ctx.fillStyle = 'black';
+		ctx.textBaseline = 'middle';
+		data.datasets[0].data.forEach((projet, i) => {
+			titreBarre = "";
+			if (projet.service){
+				titreBarre = projet.service;
+				if (projet.sousDirection){
+					titreBarre = titreBarre + " / " + projet.sousDirection;
+				}
+			}
+			if (projet.x[1]<x.ticks[0].value || projet.x[0]>x.ticks[7].value ){
+				positionX = 0;
+				titreBarre = "";
+			}else if (projet.x[0]>x.ticks[0].value){
+				positionX = left + (projet.x[0]-x.min)*x.width/(x.max-x.min);
+			}else {
+				positionX = left;
+			}
+			//console.log('textBarre', x.ticks[0].value, x.ticks[7].value);
+			ctx.fillText(titreBarre, positionX + 20,y.getPixelForValue(i));
+		});
+		ctx.restore();
+	}
 }
 
 const config = {
@@ -128,9 +199,11 @@ const config = {
   options: {
     layout:{
       padding: {
-        left: 100
+				left: 200,
+				right: 100
       }
     },
+		maintainAspectRatio : false,
     indexAxis: 'y',
     scales: {
       x: {
@@ -139,60 +212,47 @@ const config = {
         time: {
           unit: "month"
         },
-        min: dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"}),//date minimal affichée
-        max: dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"})//date maximal affichée
+				min: dateDebutGantt.getTime(),//dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"}),//date minimal affichée
+				max: dateFinGantt.getTime()//dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"})//date maximal affichée
       }
     },
     plugins: {
       legend: {
         display: false //suppression de la légende / série sur le graphique
-      }
+			},
+			tooltip: {
+				displayColors: false,
+				callbacks: {
+					label: function (context) {
+						return infoBulle(context);
+					}
+				}
+			}
     }
   },
-  plugins: [LigneJour, Agents]
+	plugins: [LigneJour, Agents, statut, textBarre]
 };
-//console.log(config);
 
+// ==========================================
+// ==== fonctions pour changer les mois =====
+// ==========================================
 
+function decalageMois(nbMois){
+	dateDebutGantt.setMonth(dateDebutGantt.getMonth() + nbMois);
+  dateFinGantt.setMonth(dateFinGantt.getMonth() + nbMois);
 
-// Création du diagramme :
-const myChart = new Chart(
-  document.getElementById('myChart'),
-  config
-);
-
-function moisPrecedent(){
-  dateDebutGantt.setMonth(dateDebutGantt.getMonth() -1);
-  dateFinGantt.setMonth(dateFinGantt.getMonth() -1);
-
-	myChart.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.update();
-
-}
-function moisSuivant(){
-  dateDebutGantt.setMonth(dateDebutGantt.getMonth() +1);
-  dateFinGantt.setMonth(dateFinGantt.getMonth() +1);
-
-	myChart.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.update();
-
+	diagrammeGantt.config.options.scales.x.min = dateDebutGantt.getTime();
+  diagrammeGantt.config.options.scales.x.max = dateFinGantt.getTime();
+  diagrammeGantt.update();
 }
 
 function moisMilieu(date){
 	ajouteMoisDate (date, dateDebutGantt, -4)
 	ajouteMoisDate (date, dateFinGantt, 4)
-	//console.log(dateDebutGantt,dateFinGantt,date.value);
 
-	myChart.config.options.scales.x.min = formatageDate(dateDebutGantt); //dateDebutGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.config.options.scales.x.max = formatageDate(dateFinGantt); //dateFinGantt.toLocaleString("en-CA",{dateStyle: "short"});
-  myChart.update();
-}
-
-function formatageDate(date){
-	// retour la date sous le format "2025-09-03" en ayant en entrée un objet Date()
-	return date.toLocaleString("en-CA",{dateStyle: "short"});
+	diagrammeGantt.config.options.scales.x.min = dateDebutGantt.getTime();
+  diagrammeGantt.config.options.scales.x.max = dateFinGantt.getTime();
+  diagrammeGantt.update();
 }
 
 function ajouteMoisDate (date, objDate, nbMois){
@@ -202,26 +262,109 @@ function ajouteMoisDate (date, objDate, nbMois){
 	objDate.setDate(parseInt(date.value.split('-')[2]));
 }
 
-/* TODO: barre de défilement pour les longues listes de projets */
-
-/*const canvasBoxBarreDefilement = document.querySelector('.canvasBoxBarreDefilement');
-if (listeProjets.length>10){
-	canvasBoxBarreDefilement.style.minHeight = `${listeProjets.length * 30}px`;
+function telechargementJPEG(){
+	document.getElementById('imgGanttLink').href = diagrammeGantt.toBase64Image('image/jpeg', 1);
+	alert();
 }
-*/
-//console.log(canvasBoxBarreDefilement.style);
 
+function telechargementJPEG() {
+  var link = document.createElement("a");
+	const aujourdhui = new Date();
+	link.download = `${aujourdhui.getFullYear()}-${aujourdhui.getMonth()+1}-${aujourdhui.getDate()}_Diagramme-Gantt.jpg`;
+  link.href = diagrammeGantt.toBase64Image('image/jpeg', 1);
+  link.click();
+}
 
-/* TODO: Connexion aux tables de grist à faire */
+function telechargementPNG() {
+	var link = document.createElement("a");
+	const aujourdhui = new Date();
+	link.download = `${aujourdhui.getFullYear()}-${aujourdhui.getMonth()+1}-${aujourdhui.getDate()}_Diagramme-Gantt.png`;
+  link.href = diagrammeGantt.toBase64Image();
+  link.click();
+}
+
+function basculerPanneauOption() {
+		const sidebar = document.getElementById('sidebar');
+		sidebar.classList.toggle('collapsed');
+}
+
+function infoBulle(context) {
+	let labels = [];
+	const data = context.dataset.data[context.dataIndex];
+
+	labels.push(`Date debut : ${new Date(data.x[0]).toLocaleString("fr-FR",{dateStyle: "short"})}`);
+	labels.push(`Date fin : ${new Date(data.x[0]).toLocaleString("fr-FR",{dateStyle: "short"})}`);
+	if (Array.isArray(data.agents)){
+		if (data.agents.length){
+			labels.push('liste des agents :');
+			data.agents.forEach ((agent, i)=>{
+				labels.push(` - ${agent}`);
+			});
+		}
+	}
+	if (data.quotite){
+		labels.push(`Quotite : ${data.quotite * 100} %`);
+	}
+	if (data.priorite){
+		labels.push(`Priorite : ${data.priorite}`);
+	}
+	return labels;
+}
+
 // ====================================
 // ==== fonctions propres à Grist =====
 // ====================================
-/*
+
+function creerlisteProjets(tableauGrist, tableauProjets, colonnes){
+	let projet = null;
+	tableauGrist.forEach((ligne, i) => {
+		projet = new Projet(ligne[colonnes.projet],
+			ligne[colonnes.dateDebut],
+			ligne[colonnes.dateFin],
+			ligne[colonnes.agents],
+			ligne[colonnes.service],
+			ligne[colonnes.sousDirection],
+			ligne[colonnes.quotite],
+			ligne[colonnes.priorite],
+			ligne[colonnes.statut]);
+		tableauProjets.push(projet);
+		if(Array.isArray(projet.agents)){
+			if (projet.agents.length > nbMaxAgents){
+				nbMaxAgents = projet.agents.length;
+			}
+		}
+	});
+}
+
 grist.ready({
+	onEditOptions() {
+		basculerPanneauOption();
+		//telechargeGantt();
+  },
   columns: colonnesNecessaires,
-	requiredAccess: 'full',
+	requiredAccess: 'read table',
 	allowSelectBy: false
 });
 
+async function creationDiagrammeGantt (){
+	const tableau = await grist.fetchSelectedTable({format: 'rows'});
+	const colonnes = await grist.sectionApi.mappings();
+	creerlisteProjets(tableau, listeProjets, colonnes);
+	//console.log('creationDiagrammeGantt', tableau, listeProjets, colonnes);
+	diagrammeGantt = new Chart(
+		document.getElementById('diagrammeGantt'),
+		config
+	);
+	const canvasBoxBarreDefilement = document.querySelector('.canvasBoxBarreDefilement');
+	if (listeProjets.length>5) {
+		canvasBoxBarreDefilement.style.height = `${listeProjets.length * 50}px`;
+	}else{
+		canvasBoxBarreDefilement.style.height = '250px';
+	}
+	let listeTables = await grist.docApi.listTables();
+	let table1 = await grist.getTable(listeTables[0]);
+	//let table2 = await grist.getTable(listeTables[1]);
+	console.log('creation Diag gantt : ', listeTables, await grist.docApi.fetchTable(listeTables[0],{format: 'rows'}), tableau, await grist.getSelectedTableId());
+}
 
-*/
+creationDiagrammeGantt();

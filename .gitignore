@@ -1,0 +1,8 @@
+# liste des  fichiers à ignorer
+
+#les fichiers pour les tests de base de données
+test-liste-projets.csv
+test-liste-agents.csv
+
+# les fichiers systèmes
+.DS_Store
